@@ -1,0 +1,6 @@
+[submodule "externals/corpus-cleaner"]
+	path = externals/corpus-cleaner
+	url = https://github.com/ce-lery/corpus-cleaner.git
+[submodule "externals/bert-japanese"]
+	path = externals/bert-japanese
+	url = https://github.com/cl-tohoku/bert-japanese.git
