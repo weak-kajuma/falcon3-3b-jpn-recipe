@@ -153,6 +153,24 @@ class ModelArguments:
             )
         },
     )
+    min_lr: Optional[float]  = field(
+        default=None,
+        metadata={
+            "help": (
+                "For example, when using cosine_with_min_lr as sucheduler, "
+                "this is an option to set the minimum learning rate."
+            )
+        },
+    )
+    min_lr_rate: Optional[float]  = field(
+        default=None,
+        metadata={
+            "help": (
+                "For example, when using cosine_with_min_lr as sucheduler, "
+                "this is an option to set the minimum learning rate's ratio."
+            )
+        },
+    )
 
     def __post_init__(self):
         if self.config_overrides is not None and (self.config_name is not None or self.model_name_or_path is not None):
@@ -614,6 +632,12 @@ def main():
             labels = labels[:, 1:].reshape(-1)
             preds = preds[:, :-1].reshape(-1)
             return metric.compute(predictions=preds, references=labels)
+
+    training_args.lr_scheduler_kwargs = {}
+    if model_args.min_lr is not None:
+        training_args.lr_scheduler_kwargs["min_lr"] = model_args.min_lr
+    elif model_args.min_lr_rate is not None:
+        training_args.lr_scheduler_kwargs["min_lr_rate"] = model_args.min_lr_rate 
 
     # Initialize our Trainer
     trainer = Trainer(
