@@ -1,0 +1,13 @@
+# other
+log
+logs
+__pycache__
+
+# python virtual environment
+.env
+
+### dataset
+
+
+### results
+results
