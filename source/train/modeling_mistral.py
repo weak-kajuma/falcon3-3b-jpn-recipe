@@ -21,25 +21,26 @@
 
 import math
 from typing import List, Optional, Tuple, Union
+import torch.nn.functional as F
 
 import torch
 import torch.utils.checkpoint
 from torch import nn
 from torch.nn import CrossEntropyLoss
 
-from ...activations import ACT2FN
-from ...cache_utils import Cache, DynamicCache, SlidingWindowCache, StaticCache
-from ...generation import GenerationMixin
-from ...modeling_attn_mask_utils import AttentionMaskConverter
-from ...modeling_outputs import (
+from transformers.activations import ACT2FN
+from transformers.cache_utils import Cache, DynamicCache, SlidingWindowCache, StaticCache
+from transformers.generation import GenerationMixin
+from transformers.modeling_attn_mask_utils import AttentionMaskConverter
+from transformers.modeling_outputs import (
     BaseModelOutputWithPast,
     CausalLMOutputWithPast,
     QuestionAnsweringModelOutput,
     SequenceClassifierOutputWithPast,
     TokenClassifierOutput,
 )
-from ...modeling_utils import PreTrainedModel
-from ...utils import (
+from transformers.modeling_utils import PreTrainedModel
+from transformers.utils import (
     add_code_sample_docstrings,
     add_start_docstrings,
     add_start_docstrings_to_model_forward,
@@ -48,11 +49,11 @@ from ...utils import (
     logging,
     replace_return_docstrings,
 )
-from .configuration_mistral import MistralConfig
+from transformers.models.mistral.configuration_mistral import MistralConfig
 
 
 if is_flash_attn_2_available():
-    from ...modeling_flash_attention_utils import _flash_attention_forward
+    from transformers.modeling_flash_attention_utils import _flash_attention_forward
 
 logger = logging.get_logger(__name__)
 
@@ -242,10 +243,16 @@ class MistralAttention(nn.Module):
         key_states = repeat_kv(key_states, self.num_key_value_groups)
         value_states = repeat_kv(value_states, self.num_key_value_groups)
 
-        attn_weights = torch.matmul(query_states, key_states.transpose(2, 3)) / math.sqrt(self.head_dim)
+        # attn_weights = torch.matmul(query_states, key_states.transpose(2, 3)) / math.sqrt(self.head_dim)
+        key_states = key_states.reshape(bsz*self.num_heads, q_len, self.head_dim)
+        query_states = query_states.reshape(bsz*self.num_heads, q_len, self.head_dim)
+        value_states = value_states.reshape(bsz*self.num_heads, q_len, self.head_dim)
+        matmul_input_buffer = torch.zeros(bsz * self.num_heads, q_len, q_len, device = key_states.device, dtype=key_states.dtype)
+        attn_weights = torch.baddbmm(matmul_input_buffer, query_states, key_states.transpose(1, 2), beta=0.0, alpha=(1.0/math.sqrt(self.head_dim)))
 
         if attention_mask is not None:  # no matter the length, we just slice it
-            causal_mask = attention_mask[:, :, :, : key_states.shape[-2]]
+            # causal_mask = attention_mask[:, :, :, : key_states.shape[-2]]
+            causal_mask = attention_mask.expand(bsz, self.num_heads, q_len, kv_seq_len).reshape(bsz * self.num_heads, q_len, kv_seq_len)
             attn_weights = attn_weights + causal_mask
 
         # upcast attention to fp32
@@ -683,6 +690,7 @@ class MistralModel(MistralPreTrainedModel):
 
     def __init__(self, config: MistralConfig):
         super().__init__(config)
+        self.patch_size = config.patch_size
         self.padding_idx = config.pad_token_id
         self.vocab_size = config.vocab_size
 
@@ -760,6 +768,12 @@ class MistralModel(MistralPreTrainedModel):
 
         if position_ids is None:
             position_ids = cache_position.unsqueeze(0)
+
+        batch_size=inputs_embeds.shape[0]
+        seq_length = inputs_embeds.shape[1]
+        num_patches = seq_length // self.patch_size
+        inputs_embeds = inputs_embeds.view(batch_size, num_patches, self.patch_size, -1).mean(2)
+        position_ids=position_ids[:, :num_patches]
 
         causal_mask = self._update_causal_mask(
             attention_mask, inputs_embeds, cache_position, past_key_values, use_cache, output_attentions
@@ -883,10 +897,12 @@ class MistralModel(MistralPreTrainedModel):
                 else past_seen_tokens + sequence_length + 1
             )
 
+        num_patches = sequence_length // self.patch_size
+
         # In case the provided `attention` mask is 2D, we generate a causal mask here (4D).
         causal_mask = self._prepare_4d_causal_attention_mask_with_cache_position(
             attention_mask,
-            sequence_length=sequence_length,
+            sequence_length=num_patches,
             target_length=target_length,
             dtype=dtype,
             device=device,
@@ -982,6 +998,7 @@ class MistralForCausalLM(MistralPreTrainedModel, GenerationMixin):
 
     def __init__(self, config):
         super().__init__(config)
+        self.patch_size = config.patch_size
         self.model = MistralModel(config)
         self.vocab_size = config.vocab_size
         self.lm_head = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
@@ -1081,18 +1098,13 @@ class MistralForCausalLM(MistralPreTrainedModel, GenerationMixin):
 
         loss = None
         if labels is not None:
-            # Upcast to float if we need to compute the loss to avoid potential precision issues
-            logits = logits.float()
-            # Shift so that tokens < n predict n
-            shift_logits = logits[..., :-1, :].contiguous()
-            shift_labels = labels[..., 1:].contiguous()
-            # Flatten the tokens
-            shift_logits = shift_logits.view(-1, self.config.vocab_size)
-            shift_labels = shift_labels.view(-1)
-            # Ensure tensors are on the same device
-            shift_labels = shift_labels.to(shift_logits.device)
-            loss_fct = CrossEntropyLoss()
-            loss = loss_fct(shift_logits, shift_labels)
+            shift_logits = logits[..., :-1, :].reshape(-1, self.config.vocab_size)
+            shift_labels = labels[..., self.patch_size:].reshape(-1, self.patch_size)
+            loss = 0
+            log_probs = F.log_softmax(shift_logits, dim=1)
+            for i in range(self.patch_size):
+                loss = loss + F.nll_loss(log_probs, shift_labels[:, i])
+            loss = loss / self.patch_size
 
         if not return_dict:
             output = (logits,) + outputs[1:]
