@@ -21,7 +21,7 @@ mkdir -p ./results/patch_train/
 SECONDS=0
 
 # ------------------------------------------
-#   patch train
+#   1st: patch train
 # ------------------------------------------
 #rm -r ./results/pretrain/$DIR_NAME/mistral2b_trial2
 python ../../source/train/run_clm_patch.py \
@@ -69,12 +69,10 @@ BATCH_SIZE=2
 GRADIENT_ACCUMULATION_STEPS=128
 
 # ------------------------------------------
-#   train
+#  2nd: pretrain
 # ------------------------------------------
 python ../../source/train/run_clm_patch.py \
     --model_type "mistral" \
-    --config_name ../../source/model/config/config_mistral_2b.json \
-    --tokenizer_name ./results/tokenizer/llamatokenizer \
     --model_name_or_path ./results/pretrain/$DIR_NAME/trial1\
     --train_file ./results/dataset/train_tail.jsonl \
     --patch_size 1 \
