@@ -6,6 +6,12 @@ __pycache__
 # python virtual environment
 .env
 
+# examples
+examples/dsir
+examples/evaluate_train_speed
+examples/pretrain_llama_3b
+examples/pretrain_mistral_diff_3b
+
 ### dataset
 
 
