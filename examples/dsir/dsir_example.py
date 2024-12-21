@@ -1,7 +1,7 @@
 from data_selection import HashedNgramDSIR
 from datasets import load_dataset
 
-raw_datasets = ["./results/dataset/cc100/cc100.txt"]
+raw_datasets = ["./oscar2109_ja_test.jsonl"]
 target_datasets = ["./wiki.txt"]
 
 def load_dataset_fn(dataset_path):
@@ -11,7 +11,7 @@ def load_dataset_fn(dataset_path):
         extension = "text"
     elif extension == "jsonl":
         extension = "json"
-    elif extension != csv and extension != json:
+    elif extension != "csv" and extension != "json":
         extension = None
 
     data_files={}
@@ -28,12 +28,13 @@ def load_dataset_fn(dataset_path):
 def parse_example_fn(example):
     return example['text']
 
-dsir = HashedNgramDSIR(raw_datasets, target_datasets, cache_dir='./cache/dsir_cache')
+# dsir = HashedNgramDSIR(raw_datasets, target_datasets, cache_dir='./cache/dsir_cache')
 
 dsir = HashedNgramDSIR(
         raw_datasets=raw_datasets,
         target_datasets=target_datasets,
         cache_dir='./cache/dsir_cache',
+        # tokenizer="word_tokenize",
         raw_parse_example_fn=parse_example_fn,
         raw_load_dataset_fn=load_dataset_fn,
         target_parse_example_fn=parse_example_fn,
@@ -42,7 +43,7 @@ dsir = HashedNgramDSIR(
 
 dsir.fit_importance_estimator(num_tokens_to_fit='auto')
 dsir.compute_importance_weights()
-dsir.resample(out_dir='resampled', num_to_sample=10, cache_dir='./cache/resampled_cache')
+dsir.resample(out_dir='resampled', num_to_sample=4, cache_dir='./cache/resampled_cache')
 
 """
 dsir.save('/path/to/dsir_params.pkl')
