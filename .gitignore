@@ -5,6 +5,8 @@ __pycache__
 
 # python virtual environment
 .env
+.env_lm_evaluation_harness
+.env_llm_jp_eval
 
 # examples
 examples/dsir
@@ -14,6 +16,16 @@ examples/pretrain_mistral_diff_3b
 
 ### dataset
 
+### source
+
+# train
+source/train/inference_mistral_da.py
+source/train/inference_te.py
+source/train/run_clm_mistral_differential.py
+source/train/run_clm_no_trainer_te.py
+source/train/run_clm_no_trainer.py
+source/train/te_llama.py
+source/train/te_patch.py
 
 ### results
 results

@@ -374,7 +374,7 @@ def main():
             extension = "json"
         print("extention:",extension)
         print("data_files[train]:", data_files["train"])
-        print("data_files[validation]:", data_files["validation"])
+        # print("data_files[validation]:", data_files["validation"])
 
         raw_datasets = load_dataset(
             extension,
@@ -451,6 +451,16 @@ def main():
         if model_args.torch_dtype in ["auto", None]
         else getattr(torch, model_args.torch_dtype)
     )
+
+    # TODO: fix here
+    # from liger_kernel.transformers import apply_liger_kernel_to_mistral
+    # apply_liger_kernel_to_mistral(
+    #     rope=True,
+    #     swiglu=True,
+    #     cross_entropy=False,
+    #     fused_linear_cross_entropy=True,
+    #     rms_norm=True
+    # )
     if model_args.model_name_or_path:
         model = AutoModelForCausalLM.from_pretrained(
             model_args.model_name_or_path,
