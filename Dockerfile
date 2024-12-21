@@ -54,6 +54,7 @@ RUN apt-get update \
     bison \
     nvtop \
     htop \
+    python3.10-venv \
 
 RUN pip install transformers==4.45.2
 RUN pip install sentencepiece==0.2.0
