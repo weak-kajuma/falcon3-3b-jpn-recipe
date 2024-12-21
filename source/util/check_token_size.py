@@ -60,8 +60,8 @@ def count_token_size(dataset_path:str, cache_dir_path:str, tokenizer_path:str):
 if __name__ == "__main__": 
     parser = argparse.ArgumentParser(description="")
     # parser.add_argument("--dataset_path",help="",default="./examples/pretrain_mistral_3b/results/dataset/wikipedia/cleaned/wiki.jsonl")
-    parser.add_argument("--dataset_path",help="",default="./externals/corpus-cleaner/results/dataset/cleaned/cc100.jsonl")
-    # parser.add_argument("--dataset_path",help="",default="./examples/pretrain_mistral_3b/results/dataset/train.jsonl")
+    # parser.add_argument("--dataset_path",help="",default="./externals/corpus-cleaner/results/dataset/cleaned/cc100.jsonl")
+    parser.add_argument("--dataset_path",help="",default="./examples/pretrain_mistral_3b/results/dataset/train.jsonl")
     parser.add_argument("--cache_dir_path",help="",default="./.cache")
     parser.add_argument("--tokenizer_path",help="",default="./examples/pretrain_mistral_3b/results/preprocess/llamatokenizer")
 
