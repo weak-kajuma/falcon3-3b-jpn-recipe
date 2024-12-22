@@ -54,9 +54,9 @@ RUN apt-get update \
     bison \
     nvtop \
     htop \
-    python3.10-venv \
+    python3.10-venv 
 
-RUN pip install transformers==4.45.2
+RUN pip install transformers==4.46.2
 RUN pip install sentencepiece==0.2.0
 RUN pip install datasets==2.20.0
 RUN pip install evaluate==0.4.2
