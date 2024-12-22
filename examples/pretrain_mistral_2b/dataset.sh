@@ -169,7 +169,7 @@ if "${CLEAN_CORPUS}"; then
     #   download mc4 corpus
     # ------------------------------------------
     # donwload mc4
-    #GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/datasets/allenai/c4.git
+    GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/datasets/allenai/c4.git
     cd c4/multilingual
     # Download 100 items from 0 to 99. 1.5GB each, total 150GB.
     for i in $(seq -w 0 100)
@@ -246,6 +246,12 @@ if "${CLEAN_CORPUS}"; then
 
     mv ../../externals/corpus-cleaner/results/dataset/cleaned/oscar2109_ja_valid.jsonl ./results/dataset/
     mv ../../externals/corpus-cleaner/results/dataset/cleaned/oscar2109_ja_test.jsonl ./results/dataset/
+
+    # split dataset for pretrain
+    python ../../source/dataset/split_dataset.py \
+        --input_file ./results/dataset/train.jsonl \
+        --split_ratio 0.8
+        # --input_file ../../source/dataset/wiki.jsonl \
 
     ### remove directory ###
     # for dataset_type in "oscar" "wiki" "cc100"
