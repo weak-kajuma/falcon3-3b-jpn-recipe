@@ -1,6 +1,6 @@
 #! /bin/bash
 
-# Please run the command "cd examples/pretrain_mistral_3b/ ; bash setup.sh"
+# Please run the command "cd examples/pretrain_mistral_2b/ ; bash setup.sh"
 
 # set log
 mkdir -p results/log/$(basename "$0" .sh)
