@@ -13,8 +13,8 @@ This repository is the recipe for create [ce-lery/mistral-2b-base](https://huggi
 
 The feature is ...
 
-- trained by japanese
-- trained in two stages: patch level and token level
+- Trained by japanese
+- Trained in two stages: patch level and token level
 - Suppression of unknown word generation by using byte fallback in SentencePiece tokenizer and conversion to huggingface Tokenizers format
 - Use of Mistral 2B
 
