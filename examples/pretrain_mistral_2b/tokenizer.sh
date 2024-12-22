@@ -1,8 +1,5 @@
 #! /bin/bash
 
-# $1 is true, or false
-readonly CLEAN_CORPUS=$1
-
 # set log
 mkdir -p results/log/$(basename "$0" .sh)
 log=results/log/$(basename "$0" .sh)/$(date +%Y%m%d_%H%M%S).log
