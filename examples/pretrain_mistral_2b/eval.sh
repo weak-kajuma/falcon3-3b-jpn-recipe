@@ -31,6 +31,9 @@ models=(
     # ["open-calm-3b"]="cyberagent/open-calm-3b"
     ["rinna-japanese-gpt-1b"]="rinna/japanese-gpt-1b"
     ["rinna-japanese-gpt-neox-3.6b"]="rinna/japanese-gpt-neox-3.6b"
+    #["llm-jp-1.3b-v1.0"]="llm-jp/llm-jp-1.3b-v1.0"
+    ["llm-jp-3-1.8b"]="llm-jp/llm-jp-3-1.8b"
+
 )
 
 for model_name in "${!models[@]}"; do
