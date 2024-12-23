@@ -38,8 +38,7 @@ import transformers
 from transformers import (
     CONFIG_MAPPING,
     MODEL_FOR_CAUSAL_LM_MAPPING,
-    AutoConfig,
-    AutoModelForCausalLM,
+    LlamaConfig,
     AutoTokenizer,
     HfArgumentParser,
     Trainer,
@@ -52,8 +51,7 @@ from transformers.testing_utils import CaptureLogger
 from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils import check_min_version, send_example_telemetry
 from transformers.utils.versions import require_version
-from transformers.models.mistral.configuration_mistral import MistralConfig
-from modeling_mistral import MistralForCausalLM
+from modeling_llama import LlamaForCausalLM
 from collections import OrderedDict
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
@@ -420,11 +418,11 @@ def main():
         "trust_remote_code": model_args.trust_remote_code,
     }
     if model_args.config_name:
-        config = MistralConfig.from_pretrained(model_args.config_name, **config_kwargs)
+        config = LlamaConfig.from_pretrained(model_args.config_name, **config_kwargs)
     elif model_args.model_name_or_path:
-        config = MistralConfig.from_pretrained(model_args.model_name_or_path, **config_kwargs)
+        config = LlamaConfig.from_pretrained(model_args.model_name_or_path, **config_kwargs)
     else:
-        config = MistralConfig()
+        config = LlamaConfig()
         logger.warning("You are instantiating a new config instance from scratch.")
         if model_args.config_overrides is not None:
             logger.info(f"Overriding config: {model_args.config_overrides}")
@@ -464,7 +462,7 @@ def main():
     #     rms_norm=True
     # )
     if model_args.model_name_or_path:
-        model = MistralForCausalLM.from_pretrained(
+        model = LlamaForCausalLM.from_pretrained(
             model_args.model_name_or_path,
             from_tf=bool(".ckpt" in model_args.model_name_or_path),
             config=config,
@@ -477,7 +475,7 @@ def main():
             attn_implementation="flash_attention_2"
         )
     else:
-        model = MistralForCausalLM.from_pretrained(
+        model = LlamaForCausalLM.from_pretrained(
                                 pretrained_model_name_or_path=None, 
                                 trust_remote_code=model_args.trust_remote_code,
                                 config=config, 
