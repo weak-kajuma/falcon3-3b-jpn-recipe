@@ -1,5 +1,5 @@
-BATCH_SIZE=1
-GRADIENT_ACCUMULATION_STEPS=128
+BATCH_SIZE=2
+GRADIENT_ACCUMULATION_STEPS=64
 EPOCH=1
 DIR_NAME=patch_pretrain_falcon_3b
 mkdir -p ../results/pretrain/
@@ -17,7 +17,6 @@ accelerate launch ../source/train/run_clm_patch.py \
     --remove_unused_columns False \
     --learning_rate 2.0e-4 \
     --weight_decay 0.1 \
-    --adam_beta2 0.95 \
     --num_train_epochs $EPOCH \
     --logging_dir ./results/pretrain/logs/$DIR_NAME/trial1 \
     --logging_strategy "steps" \
