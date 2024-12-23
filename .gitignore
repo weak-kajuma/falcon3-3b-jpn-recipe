@@ -7,6 +7,7 @@ __pycache__
 .env
 .env_lm_evaluation_harness
 .env_llm_jp_eval
+venv
 
 # examples
 examples/dsir
