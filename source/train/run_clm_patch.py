@@ -175,6 +175,15 @@ class ModelArguments:
             )
         },
     )
+    attn_implementation: Optional[str]  = field(
+        default="flash_attention_2",
+        metadata={
+            "help": (
+                "It is an option to select attn_implementation.",
+                "You can choose eager, sdpa, or flash_attention_2."
+            )
+        },
+    )
 
     def __post_init__(self):
         if self.config_overrides is not None and (self.config_name is not None or self.model_name_or_path is not None):
@@ -196,7 +205,7 @@ class DataTrainingArguments:
         default=None, metadata={"help": "The configuration name of the dataset to use (via the datasets library)."}
     )
     train_file: Optional[str] = field(default=None, metadata={"help": "The input training data file (a text file)."})
-    validation_file: Optional[str] = field(
+    test_file: Optional[str] = field(
         default=None,
         metadata={"help": "An optional input evaluation data file to evaluate the perplexity on (a text file)."},
     )
@@ -232,10 +241,10 @@ class DataTrainingArguments:
     overwrite_cache: bool = field(
         default=False, metadata={"help": "Overwrite the cached training and evaluation sets"}
     )
-    validation_split_percentage: Optional[int] = field(
+    test_split_percentage: Optional[int] = field(
         default=5,
         metadata={
-            "help": "The percentage of the train set used as validation set in case there's no validation split"
+            "help": "The percentage of the train set used as test set in case there's no test split"
         },
     )
     preprocessing_num_workers: Optional[int] = field(
@@ -250,14 +259,14 @@ class DataTrainingArguments:
         if self.streaming:
             require_version("datasets>=2.0.0", "The streaming feature requires `datasets>=2.0.0`")
 
-        if self.dataset_name is None and self.train_file is None and self.validation_file is None:
-            raise ValueError("Need either a dataset name or a training/validation file.")
+        if self.dataset_name is None and self.train_file is None and self.test_file is None:
+            raise ValueError("Need either a dataset name or a training/test file.")
         else:
             if self.train_file is not None:
                 extension = self.train_file.split(".")[-1]
                 assert extension in ["csv", "json", "txt", "jsonl"], "`train_file` should be a csv, a json or a txt file."
-            if self.validation_file is not None:
-                extension = self.validation_file.split(".")[-1]
+            if self.test_file is not None:
+                extension = self.test_file.split(".")[-1]
                 assert extension in ["csv", "json", "txt", "jsonl"], "`train_file` should be a csv, a json or a txt file."
 
 
@@ -340,11 +349,11 @@ def main():
             streaming=data_args.streaming,
             trust_remote_code=model_args.trust_remote_code,
         )
-        if "validation" not in raw_datasets.keys():
-            raw_datasets["validation"] = load_dataset(
+        if "test" not in raw_datasets.keys():
+            raw_datasets["test"] = load_dataset(
                 data_args.dataset_name,
                 data_args.dataset_config_name,
-                split=f"train[:{data_args.validation_split_percentage}%]",
+                split=f"train[:{data_args.test_split_percentage}%]",
                 cache_dir=model_args.cache_dir,
                 token=model_args.token,
                 streaming=data_args.streaming,
@@ -353,53 +362,11 @@ def main():
             raw_datasets["train"] = load_dataset(
                 data_args.dataset_name,
                 data_args.dataset_config_name,
-                split=f"train[{data_args.validation_split_percentage}%:]",
+                split=f"train[{data_args.test_split_percentage}%:]",
                 cache_dir=model_args.cache_dir,
                 token=model_args.token,
                 streaming=data_args.streaming,
                 trust_remote_code=model_args.trust_remote_code,
-            )
-    else:
-        data_files = {}
-        dataset_args = {}
-        if data_args.train_file is not None:
-            data_files["train"] = data_args.train_file
-        if data_args.validation_file is not None:
-            data_files["validation"] = data_args.validation_file
-        extension = (
-            data_args.train_file.split(".")[-1]
-            if data_args.train_file is not None
-            else data_args.validation_file.split(".")[-1]
-        )
-        if extension == "txt":
-            extension = "text"
-            dataset_args["keep_linebreaks"] = data_args.keep_linebreaks
-        if extension == "jsonl":
-            extension = "json"
-        raw_datasets = load_dataset(
-            extension,
-            data_files=data_files,
-            cache_dir=model_args.cache_dir,
-            token=model_args.token,
-            **dataset_args,
-        )
-        # If no validation data is there, validation_split_percentage will be used to divide the dataset.
-        if "validation" not in raw_datasets.keys():
-            raw_datasets["validation"] = load_dataset(
-                extension,
-                data_files=data_files,
-                split=f"train[:{data_args.validation_split_percentage}%]",
-                cache_dir=model_args.cache_dir,
-                token=model_args.token,
-                **dataset_args,
-            )
-            raw_datasets["train"] = load_dataset(
-                extension,
-                data_files=data_files,
-                split=f"train[{data_args.validation_split_percentage}%:]",
-                cache_dir=model_args.cache_dir,
-                token=model_args.token,
-                **dataset_args,
             )
 
     # See more about loading any type of standard or custom dataset (from files, python dict, pandas DataFrame, etc) at
@@ -472,7 +439,7 @@ def main():
             # trust_remote_code=model_args.trust_remote_code,
             torch_dtype=torch_dtype,
             low_cpu_mem_usage=model_args.low_cpu_mem_usage,
-            attn_implementation="flash_attention_2"
+            attn_implementation=model_args.attn_implementation
         )
     else:
         model = LlamaForCausalLM.from_pretrained(
@@ -481,7 +448,7 @@ def main():
                                 config=config, 
                                 state_dict=OrderedDict(),
                                 torch_dtype=torch_dtype,
-                                attn_implementation="flash_attention_2"
+                                attn_implementation=model_args.attn_implementation
                             )
         n_params = sum({p.data_ptr(): p.numel() for p in model.parameters()}.values())
         logger.info(f"Training new model from scratch - Total size={n_params/2**20:.2f}M params")
@@ -500,7 +467,7 @@ def main():
     if training_args.do_train:
         column_names = list(raw_datasets["train"].features)
     else:
-        column_names = list(raw_datasets["validation"].features)
+        column_names = list(raw_datasets["test"].features)
     text_column_name = "text" if "text" in column_names else column_names[0]
 
     # since this will be pickled to avoid _LazyModule error in Hasher force logger loading before tokenize_function
@@ -510,8 +477,8 @@ def main():
         with CaptureLogger(tok_logger) as cl:
             #output = tokenizer(examples[text_column_name])
             # add BOS and EOS
-            processed_texts = [tokenizer.bos_token + text + tokenizer.eos_token for text in examples[text_column_name]]
-            output = tokenizer(processed_texts,add_special_tokens=False)
+            processed_texts = [text + tokenizer.eos_token for text in examples[text_column_name]]
+            output = tokenizer(processed_texts)
             # # If there are other columns in examples, we need to preserve them
             # for key in examples.keys():
             #     if key != text_column_name:
@@ -523,14 +490,14 @@ def main():
                 " before being passed to the model."
             )
         return output
-
+   
     print(">>> tokenizer test")
     text = "こんにちは。私は日本人です。"
-    text_encoded = tokenizer(text,add_special_tokens=False)
+    text_encoded = tokenizer(text)
     print(text_encoded)
     print(tokenizer.decode(text_encoded["input_ids"]))
-    text = tokenizer.bos_token + text + tokenizer.eos_token
-    text_encoded = tokenizer(text,add_special_tokens=False)
+    text = text + tokenizer.eos_token
+    text_encoded = tokenizer(text)
     print(text_encoded)
     print(tokenizer.decode(text_encoded["input_ids"]))
 
@@ -622,9 +589,9 @@ def main():
             train_dataset = train_dataset.select(range(max_train_samples))
 
     if training_args.do_eval:
-        if "validation" not in tokenized_datasets:
-            raise ValueError("--do_eval requires a validation dataset")
-        eval_dataset = lm_datasets["validation"]
+        if "test" not in tokenized_datasets:
+            raise ValueError("--do_eval requires a test dataset")
+        eval_dataset = lm_datasets["test"]
         if data_args.max_eval_samples is not None:
             max_eval_samples = min(len(eval_dataset), data_args.max_eval_samples)
             eval_dataset = eval_dataset.select(range(max_eval_samples))
@@ -636,7 +603,7 @@ def main():
                 logits = logits[0]
             return logits.argmax(dim=-1)
 
-        # metric = evaluate.load("accuracy", cache_dir=model_args.cache_dir)
+        metric = evaluate.load("accuracy", cache_dir=model_args.cache_dir)
 
         def compute_metrics(eval_preds):
             preds, labels = eval_preds
