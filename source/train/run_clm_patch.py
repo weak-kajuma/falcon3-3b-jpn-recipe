@@ -344,7 +344,6 @@ def main():
         raw_datasets = load_dataset(
             data_args.dataset_name,
             data_args.dataset_config_name,
-            cache_dir=model_args.cache_dir,
             token=model_args.token,
             streaming=data_args.streaming,
             trust_remote_code=model_args.trust_remote_code,
@@ -354,7 +353,6 @@ def main():
                 data_args.dataset_name,
                 data_args.dataset_config_name,
                 split=f"train[:{data_args.test_split_percentage}%]",
-                cache_dir=model_args.cache_dir,
                 token=model_args.token,
                 streaming=data_args.streaming,
                 trust_remote_code=model_args.trust_remote_code,
@@ -363,7 +361,6 @@ def main():
                 data_args.dataset_name,
                 data_args.dataset_config_name,
                 split=f"train[{data_args.test_split_percentage}%:]",
-                cache_dir=model_args.cache_dir,
                 token=model_args.token,
                 streaming=data_args.streaming,
                 trust_remote_code=model_args.trust_remote_code,
@@ -379,7 +376,6 @@ def main():
     # download model & vocab.
 
     config_kwargs = {
-        "cache_dir": model_args.cache_dir,
         "revision": model_args.model_revision,
         "token": model_args.token,
         "trust_remote_code": model_args.trust_remote_code,
@@ -399,7 +395,6 @@ def main():
     config.patch_size = model_args.patch_size
 
     tokenizer_kwargs = {
-        "cache_dir": model_args.cache_dir,
         "use_fast": model_args.use_fast_tokenizer,
         "revision": model_args.model_revision,
         "token": model_args.token,
@@ -433,7 +428,6 @@ def main():
             model_args.model_name_or_path,
             from_tf=bool(".ckpt" in model_args.model_name_or_path),
             config=config,
-            cache_dir=model_args.cache_dir,
             revision=model_args.model_revision,
             token=model_args.token,
             # trust_remote_code=model_args.trust_remote_code,
@@ -603,7 +597,7 @@ def main():
                 logits = logits[0]
             return logits.argmax(dim=-1)
 
-        metric = evaluate.load("accuracy", cache_dir=model_args.cache_dir)
+        metric = evaluate.load("accuracy")
 
         def compute_metrics(eval_preds):
             preds, labels = eval_preds
