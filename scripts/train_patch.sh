@@ -2,15 +2,15 @@ BATCH_SIZE=8
 GRADIENT_ACCUMULATION_STEPS=32
 EPOCH=1
 DIR_NAME=patch_pretrain_falcon_3b
-mkdir -p ../results/pretrain/
+mkdir -p ~/results/pretrain/
 
 python ../source/train/run_clm_patch.py \
     --model_type "llama" \
     --model_name_or_path tiiuae/Falcon3-3B-Base \
     --dataset_name kajuma/training_12-23_patch \
     --patch_size 4 \
-    --output_dir ./results/pretrain/$DIR_NAME/trial1 \
-    --cache_dir ./results/pretrain/cache/patch_train \
+    --output_dir ~/results/pretrain/$DIR_NAME/trial1 \
+    --cache_dir ~/results/pretrain/cache/patch_train \
     --do_train \
     --do_eval \
     --prediction_loss_only \
@@ -19,7 +19,7 @@ python ../source/train/run_clm_patch.py \
     --weight_decay 0.1 \
     --adam_beta2 0.95 \
     --num_train_epochs $EPOCH \
-    --logging_dir ./results/pretrain/logs/$DIR_NAME/trial1 \
+    --logging_dir ~/results/pretrain/logs/$DIR_NAME/trial1 \
     --logging_strategy "steps" \
     --logging_steps 10 \
     --save_strategy "steps" \
@@ -41,7 +41,7 @@ python ../source/train/run_clm_patch.py \
     --dataloader_num_workers 64 \
     --optim "adamw_bnb_8bit" \
     --attn_implementation "flash_attention_2" \
-    --resume_from_checkpoint ./results/pretrain/patch_pretrain_falcon_3b/trial1/checkpoint-5000/
+    --resume_from_checkpoint ~/checkpoint-5000/
     # --torch_compile True \
     # --torch_compile_backend "eager" \
     # --resume_from_checkpoint ./results/pretrain/pretrain_mistral/trial1/checkpoint-5000/
