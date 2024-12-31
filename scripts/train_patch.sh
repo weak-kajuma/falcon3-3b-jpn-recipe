@@ -4,7 +4,7 @@ EPOCH=1
 DIR_NAME=patch_pretrain_falcon_1b
 mkdir -p ~/falcon3/results/pretrain/
 
-python ../source/train/run_clm_patch.py \
+accelerate launch ../source/train/run_clm_patch.py \
     --model_type "llama" \
     --model_name_or_path tiiuae/Falcon3-1B-Base \
     --dataset_name kajuma/training_12-23_patch \
