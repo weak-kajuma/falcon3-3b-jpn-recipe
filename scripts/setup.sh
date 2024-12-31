@@ -10,7 +10,8 @@ pip install schedulefree
 pip install wheel
 pip install flash-attn --no-build-isolation
 pip install tf-keras
-pip install git+https://github.com/NVIDIA/TransformerEngine.git@stable
+# pip install git+https://github.com/NVIDIA/TransformerEngine.git@stable
+pip install transformer_engine[pytorch]
 
 
 huggingface-cli login --token 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
