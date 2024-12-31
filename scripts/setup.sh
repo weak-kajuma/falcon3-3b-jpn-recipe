@@ -1,6 +1,5 @@
 #! /bin/bash
 
-
 pip install git+https://github.com/nhamanasu/transformers.git@radam-schedulefree
 pip install sentencepiece datasets evaluate accelerate==1.2.1
 pip install scikit-learn
@@ -9,10 +8,7 @@ pip install liger_kernel
 pip install schedulefree
 pip install wheel
 pip install flash-attn --no-build-isolation
-pip install tf-keras
-# pip install git+https://github.com/NVIDIA/TransformerEngine.git@stable
-pip install transformer_engine[pytorch]
-
+pip install tf-keras "numpy<2"
 
 huggingface-cli login --token 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
 pip install hf_transfer wandb
