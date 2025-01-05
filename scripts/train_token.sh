@@ -1,5 +1,5 @@
-BATCH_SIZE=32
-GRADIENT_ACCUMULATION_STEPS=8
+BATCH_SIZE=16
+GRADIENT_ACCUMULATION_STEPS=16
 EPOCH=1
 DIR_NAME=patch_pretrain_falcon_1b
 mkdir -p ~/falcon3-token/results/

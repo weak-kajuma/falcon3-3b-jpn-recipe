@@ -1,14 +1,13 @@
-BATCH_SIZE=32
-GRADIENT_ACCUMULATION_STEPS=8
+BATCH_SIZE=16
+GRADIENT_ACCUMULATION_STEPS=16
 EPOCH=1
-DIR_NAME=patch_pretrain_falcon_3b
+DIR_NAME=patch_pretrain_falcon_1b
 mkdir -p ~/falcon3/results/
 
-python ../source/train/run_clm_patch.py \
+python ../source/train/run_clm.py \
     --model_type "llama" \
-    --model_name_or_path kajuma/falcon3_3b_patch \
-    --dataset_name kajuma/training_12-23_token \
-    --patch_size 4 \
+    --model_name_or_path tiiuae/Falcon3-1B-Base \
+    --dataset_name kajuma/training_12-23 \
     --output_dir ~/falcon3/results/ \
     --cache_dir ./cache/ \
     --do_train \
@@ -18,11 +17,13 @@ python ../source/train/run_clm_patch.py \
     --learning_rate 2.0e-4 \
     --weight_decay 0.1 \
     --num_train_epochs $EPOCH \
-    --logging_dir ~/falcon3/results/ \
+    --logging_dir ~/falcon3/results/logs/ \
     --logging_strategy "steps" \
-    --logging_steps 10 \
+    --logging_steps 1 \
     --save_strategy "steps" \
-    --save_steps 1000 \
+    --eval_strategy "steps" \
+    --save_steps 100 \
+    --eval_steps 500 \
     --save_total_limit 100000 \
     --lr_scheduler_type constant \
     --per_device_train_batch_size $BATCH_SIZE \
@@ -31,11 +32,14 @@ python ../source/train/run_clm_patch.py \
     --block_size 2048 \
     --torch_dtype "bfloat16" \
     --gradient_accumulation_steps $GRADIENT_ACCUMULATION_STEPS \
-    --push_to_hub False \
+    --push_to_hub True \
+    --hub_strategy end \
     --preprocessing_num_workers 64 \
     --dataloader_num_workers 64 \
-    --optim "schedule_free_adamw" \
+    --optim "schedule_free_radam" \
     --attn_implementation "flash_attention_2" \
+    --use_liger_kernel True \
+    --overwrite_output_dir
     # --torch_compile True \
     # --torch_compile_backend "eager" \
     # --resume_from_checkpoint ./results/pretrain/pretrain_mistral/trial1/checkpoint-5000/
