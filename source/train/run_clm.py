@@ -384,7 +384,6 @@ def main():
             config.update_from_string(model_args.config_overrides)
             logger.info(f"New config: {config}")
 
-    config.patch_size = model_args.patch_size
 
     tokenizer_kwargs = {
         "use_fast": model_args.use_fast_tokenizer,
